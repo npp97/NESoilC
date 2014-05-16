@@ -260,3 +260,5 @@ Enter file contents herealltrees<-read.csv('alltrees.csv',na.strings='NULL',colC
 # ydID                zwmcbh xyfID  xj  jj  sg  zxg    whq shl comm                                 recorder                   recorderDate modifyDate
 #    1 CBSSYF080628001   紫椴    13     1.3 1.6 2.4 <NA>  营养期       中       <NA>                                 曹伟、黄祥童、于兴华、李岩、高燕、刘巍、        80628      00:00.0
 with(alltrees,alltrees$xxjj<-xj/jj);
+
+summaryBy()

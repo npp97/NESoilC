@@ -5,7 +5,7 @@
 require(dplR)
 require(pander)
 require(doBy)
-
+require(robust)
 #----------------------
 sumfun <- function(x, ...){
 	c(m=mean(x, ...), md=median(x,...),v=sd(x, ...), l=length(x,...),mi=min(x,...),mx=max(x,...))
@@ -47,11 +47,19 @@ grw_crv<-function(pars,x,y){
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 #please set the data fold as the working fold. 
+##########################################################################################################################
+##############################################                                                                       #####
+##########################        Search plot age using tree-ring chronsequences                                     #####
+######################            to determine the Age-Diam curves for each tree and each plot                       #####
+###########################       by Junhui ZHANG @ 2014-05                                                          #####
+##########################################################################################################################
 
 #read raw tree-ring chronsequences
+#-------------------------------------
 flst<-dir(pattern='*.fh', recursive = TRUE,ignore.case = TRUE)
 	lflst<-length(flst)
-#read site_info table	
+#setup site_info table from tree-ring files	
+#--------------------------------------------------
 	las<-as.data.frame(matrix(NA,ncol=5,nrow=lflst))
 	names(las)<-c('TRFN','location','species','age','filename')	
 #begin to read raw chronsequence and to build the cross-section of raw-chron and site-info
@@ -87,10 +95,16 @@ las$age<-as.numeric(las$age)
 las$species<-as.factor(las$species)
 las$TRFN<-gsub('-','',las$TRFN)
 
+#--read 年轮-样地对应表
+#-------------------------------------------------------
 site_tring<-read.csv('年轮-样地对应表.csv');
 site_tring$ydID<-as.character(site_tring$ydID);
 site_tring$TRFN<-as.character(site_tring$TRFN);
 site_tring$TRFN<-gsub('-','',site_tring$TRFN)
+
+#---------------------------------------------------------------------#
+# build site info by mergeing 年轮-样地对应表 and tree-ring built site_info #
+#---------------------------------------------------------------------#
 site_info<-merge(las,site_tring)
 
 l.lst<-nrow(site_info)
@@ -256,6 +270,15 @@ save(chr.rwl,diam_age,              #two kind of rqw chronsequences
 #   objectives : (1) interception ; (2) slope 
 #   input: site_info_ss :: to provide 
 #   
+#############################################################################################################################################################
+#########
+############
+#################       to search the dominant species of each plot 
+############################              by Junhui ZHANG @ 2014-05
+##########################################
+#########################################################################
+##############################################################################################################################################################
+
 xxalp<-read.csv('alltrees.csv',na.strings='NULL',colClasses=c(rep('factor',3),rep('numeric',3),rep('character',7)))
 # ydID                zwmcbh xyfID  xj  jj  sg  zxg    whq shl comm                                 recorder                   recorderDate modifyDate
 #    1 CBSSYF080628001   紫椴    13     1.3 1.6 2.4 <NA>  营养期       中       <NA>                                 曹伟、黄祥童、于兴华、李岩、高燕、刘巍、        80628      00:00.0
@@ -353,9 +376,44 @@ dom_spec[,c(2,4)]<-t(f2max);
 # 		裂叶榆		  落叶松  	 毛赤杨   	蒙古栎   		青楷槭   	色木槭    	 山杨   		水曲柳   		  榆树  		 樟子松   	  紫椴 
 #       1       80        6       44        1        5       11       10        1       21        1 
 
-win.graph(width=6,height=4)
-par(mfrow=c(1,2))
-plot(density(dom_spec[,2]),main='第一建群种优势度概率密度');grid();abline(v=mean(dom_spec[,2]))
-plot(density(dom_spec[,4]),main='第二建群种优势度概率密度');grid();abline(v=mean(dom_spec[,4]))
+#dominant species and plot number of NEC
+# sort(summary(as.factor(dom_spec[,1])),decreasing = T)
+ #蒙古栎       落叶松         白桦   黄花落叶松         红松       樟子松         油松         山杨       色木槭       臭冷杉       胡桃楸 
+#393    198   176  113     97    95   83   65    61   50  49 
+#水曲柳   兴安落叶松     暴马丁香         紫椴         春榆         糠椴         黑桦       花曲柳       髭脉槭         山杏         风桦 
+#46   42     35     32     31   28   25   21    19    15  14 
+#槲树         櫰槐         岳桦     鱼鳞云杉         赤松     红皮云杉         刺槐     沙松冷杉       毛赤杨       紫花槭       茶条槭 
+#14    14   13   12   11   11     10    9     8      8    7 
+#大果榆         槲栎       花楷槭   日本落叶松         香杨         侧柏       辽东栎         山楂   水冬瓜赤杨       裂叶榆       千金榆 
+#7            7            6            6            6            5            5            5            5            4            4 
+#榆树       大青杨       大叶朴       东北槭       青楷槭       元宝槭       朝鲜柳         稠李         麻栎         青杨     日本赤杨 
+#4            3            3            3            3            3            2            2            2            2            2 
+#三花槭       山荆子    水榆花楸a       小叶朴       小叶杨       钻天柳     斑叶稠李       梣叶槭         臭椿       大黄柳       灯台树 
+#2            2            2            2            2            2            1            1            1            1            1 
+#东北赤杨         蒿柳         加杨           桑       栓皮栎       小楷槭       小钻杨       长白松 长白鱼鳞云杉 
+#1            1            1            1            1            1            1            1            1 
 
-#---------Then calculate the correlationship between xj and jj
+#---------Then calculate the correlationship between xj and jj using the 1st order linear regression xj=a+b*jj
+
+dom_sp1<-data.frame(ydID=row.names(dom_spec),spec=dom_spec[,1:2]);
+dom_sp2<-data.frame(ydID=row.names(dom_spec),spec=dom_spec[,3:4]);
+dom_sp.l<-rbind(dom_sp1,dom_sp2);
+
+xxjjco<-as.data.frame(matrix(nrow=nrow(dom_sp.l),ncol=4));
+xxjjco<-data.frame(dom_sp.l,xxjjco);
+names(xxjjco)<-c('ydID','dom_spec','ImpV','b_xj','a_xj','b0_I','R2-adj')
+lc<-nrow(xxjjco)
+for (i in 1:lc){
+	ii<-which((xxalp$zwmcbh==xxjjco$dom_spec[i])&(xxalp$ydID==xxjjco$ydID[i]));
+	if ((length(!is.na(xxjjco$xj[ii]))>0)&(length(!is.na(xxjjco$jj[ii]))>0)){
+		y.xj=xxjjco$xj[ii];
+		x.jj=xxjjco$jj[ii];
+		m1<-lmRob(y.xj~x.jj);
+		xxjjco[i,4:5]=coef(m1);
+		xxjjco[i,7]=summary(m1)[8];
+		xxjjco[i,6]=coef(m1)[1]/coef(m1)[2];
+	}
+}
+
+#Next step is  to merge xj-jj correction with site_info table/age table by tree-ring: correction=b0_I/avg_grw_rate_05
+

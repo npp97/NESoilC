@@ -24,6 +24,7 @@ head(xxal);
 w_xxal<-read.csv('xxal_ful.csv');
 head(w_xxal)
 
+#3----------------------
 xxalf<-w_xxal[,c(2:4,10,12,14,15)];
 xxalf$id<-1:nrow(xxal)
 xxalf$soil_Ccb<-(xxal$soil_C^0.25-1)/0.25;

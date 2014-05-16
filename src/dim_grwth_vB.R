@@ -317,7 +317,7 @@ rden.2<-acast(chick_m, ydID ~ zwmcbh, sum, na.rm=T)
 #----relative frequency :: rfrq
 rfrq.2<-merge(ctbl,rfrq2.1,all=T);
 names(rfrq.2)[3]<-'rfrq'
-
+#-------
 chick_m <- melt(rfrq.2, id=1:2, na.rm=FALSE)
 rfrq.2<-acast(chick_m, ydID ~ zwmcbh, sum, na.rm=T) 
 #-------relative coverage :: rcvg.2

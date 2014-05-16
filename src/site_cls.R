@@ -76,7 +76,7 @@ fst2max <- function(x, ...){
 }
 
 
-#-------------
+#----------------------------------------
 ########################    Data prepa   r#####################################################
 xxalp<-read.csv('all.csv',colClasses=c(rep('character',2),rep('numeric',5)));
 #cross area at breast height(1.3m) unit: cm2

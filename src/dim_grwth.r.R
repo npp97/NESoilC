@@ -9,7 +9,7 @@ require(doBy)
 sumfun <- function(x, ...){
 	c(m=mean(x, ...), md=median(x,...),v=sd(x, ...), l=length(x,...),mi=min(x,...),mx=max(x,...))
 }
-
+#--------------
 loc.spe<-function(tmp){
 	spe<-locc<-ag<-NA
 	spp<-agrep('SpeciesName',tmp);

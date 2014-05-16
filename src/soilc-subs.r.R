@@ -22,7 +22,7 @@ function(ddata, bins, resolution){
 #
 	data.out <- matrix(0, bins, 2)
 	nvals <- length(ddata)
-#
+#-----------------------
 # Create histogram intervals
 #
 	max.ddata <- max(ddata)

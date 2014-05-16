@@ -14,7 +14,7 @@ library(mgcv)
 library(lattice)
 require(boBy)
 
-
+#---------------------------
 setwd("C:\\Users\\lenovo\\workspace\\NESoilC\\data")
 load('xxal.RData')
 xyplot(soil_C~abv_C|dominant,data=xxal)

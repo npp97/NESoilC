@@ -256,9 +256,106 @@ save(chr.rwl,diam_age,              #two kind of rqw chronsequences
 #   objectives : (1) interception ; (2) slope 
 #   input: site_info_ss :: to provide 
 #   
-Enter file contents herealltrees<-read.csv('alltrees.csv',na.strings='NULL',colClasses=c(rep('factor',3),rep('numeric',3),rep('character',7)))
+xxalp<-read.csv('alltrees.csv',na.strings='NULL',colClasses=c(rep('factor',3),rep('numeric',3),rep('character',7)))
 # ydID                zwmcbh xyfID  xj  jj  sg  zxg    whq shl comm                                 recorder                   recorderDate modifyDate
 #    1 CBSSYF080628001   紫椴    13     1.3 1.6 2.4 <NA>  营养期       中       <NA>                                 曹伟、黄祥童、于兴华、李岩、高燕、刘巍、        80628      00:00.0
-with(alltrees,alltrees$xxjj<-xj/jj);
+xxalp$cab<-xxalp$xj*xxalp$xj*pi/4.0;
+xxalp$xxjj<-xxalp$xj/xxalp$jj;
 
-summaryBy()
+tree.spec<-as.character(unlist(levels(as.factor(xxalp$zwmcbh))));
+site.lst<-as.character(unlist(levels(as.factor(xxalp$ydID))));
+
+nsite<-length(site.lst);
+nspec<-length(tree.spec);
+
+#QA XJ-JJ
+#
+ooxxjj<-(xxalp$xxjj>1)
+ooxxjj2<-(xxalp$xxjj<=1)
+
+for (i in 1:nsite){
+	for (j in 1:nspec){
+		ooii<-(xxalp$ydID %in% site.lst[i])&(xxalp$zwmcbh %in% tree.spec[j])
+		ii<-which(ooii&ooxxjj)		
+		if ((length(ii)>0)) {
+			jj<-which(ooii&ooxxjj2)
+			if(length(jj)>0){
+				xxalp$jj[ii]<-predict(xxalp$xj[jj],lm(xxalp$jj[jj]~xxalp$xj[jj]));}}
+#			xxalp$xxjj[ii]<-median(xxalp$xxjj[jj]); xxalp$jj[ii]=xxalp$xj[ii]/median(xxalp$xxjj[jj])}	
+	}
+}
+
+ctbl<-as.data.frame(matrix(ncol=2,nrow=nsite*nspec))
+names(ctbl)<-c('ydID','zwmcbh')
+cc<-merge(tree.spec,site.lst)
+ctbl[,1]<-cc[,2]; ctbl[,2]<-cc[,1]; rm(cc);
+
+#ctbl[,1:2]<-as.character(ctbl[,1:2]);
+
+#To generate site X species table for important value calculation
+table.topr<-as.data.frame(matrix(0,ncol=nspec,nrow=nsite));
+names(table.topr)<-tree.spec;
+row.names(table.topr)<-site.lst;
+
+#tables: importance value; relative density; relative coverage; relative frequency.
+tbl.impV<-tbl.rden<-tbl.rcvg<-tbl.rfrq<-table.topr; 
+
+rden.1<-summaryBy(xj~ydID+zwmcbh,data=xxalp,FUN=length); #density  by plot and speces
+rfrq.1<-summaryBy(xj~ydID+zwmcbh+xyfID,data=xxalp,FUN=length);
+rfrq2.1<-summaryBy(xyfID~ydID+zwmcbh,data=rfrq.1,FUN=length); # frequency by plot and speces
+rcvg.1<-summaryBy(cab~ydID+zwmcbh,data=xxalp,FUN=sum); # total cutting area by plot and speces
+
+# --to reshape these calculation into real table------
+
+#----relative density :: rden.2
+rden.2<-merge(ctbl,rden.1,all=T);
+names(rden.2)[3]<-'rden'
+
+chick_m <- melt(rden.2, id=1:2, na.rm=FALSE)
+rden.2<-acast(chick_m, ydID ~ zwmcbh, sum, na.rm=T) 
+
+#----relative frequency :: rfrq
+rfrq.2<-merge(ctbl,rfrq2.1,all=T);
+names(rfrq.2)[3]<-'rfrq'
+
+chick_m <- melt(rfrq.2, id=1:2, na.rm=FALSE)
+rfrq.2<-acast(chick_m, ydID ~ zwmcbh, sum, na.rm=T) 
+#-------relative coverage :: rcvg.2
+rcvg.2<-merge(ctbl,rcvg.1,all=T);
+names(rcvg.2)[3]<-'rcvg'
+
+chick_m <- melt(rcvg.2, id=1:2, na.rm=FALSE)
+rcvg.2<-acast(chick_m, ydID ~ zwmcbh, sum, na.rm=T) 
+
+#---------normalization to calculate important values：rimp
+rden.3<-rden.2/apply(rden.2,1,sum,na.rm=T);
+rfrq.3<-rfrq.2/36;
+rcvg.3<-rcvg.2/apply(rcvg.2,1,sum,na.rm=T);
+
+rimp<-(rden.3+rfrq.3+rcvg.3)/3;
+
+#---------Simpson Index:: simp_idx
+simp_idx= 1- apply(rden.3*rden.3,1,sum);
+
+#dominant species :: dom_spec
+dom_spec<-as.data.frame(matrix(ncol=4,nrow=nrow(rimp)));
+row.names(dom_spec)<-row.names(rimp);
+names(dom_spec)<-c('max_spec','max','max2_spec','max2')
+f2max=apply(rimp,1,fst2max);
+f2maxi<-apply(rimp,1,fst2maxi);
+
+dom_spec[,c(1,3)]<-colnames(rimp)[t(f2maxi)];
+dom_spec[,c(2,4)]<-t(f2max);
+
+#dominant species and plot number of XXAL 
+#   白桦 			斑叶稠李                稠李   	臭冷杉     	春榆     	         风桦    		蒿柳     	黑桦		 红皮云杉    		 红松  		 胡桃楸    	 櫰槐     	糠椴 
+#      65        1        1       15       16        3        1        6        9       28        3        1        1 
+# 		裂叶榆		  落叶松  	 毛赤杨   	蒙古栎   		青楷槭   	色木槭    	 山杨   		水曲柳   		  榆树  		 樟子松   	  紫椴 
+#       1       80        6       44        1        5       11       10        1       21        1 
+
+win.graph(width=6,height=4)
+par(mfrow=c(1,2))
+plot(density(dom_spec[,2]),main='第一建群种优势度概率密度');grid();abline(v=mean(dom_spec[,2]))
+plot(density(dom_spec[,4]),main='第二建群种优势度概率密度');grid();abline(v=mean(dom_spec[,4]))
+
+#---------Then calculate the correlationship between xj and jj

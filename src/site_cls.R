@@ -56,6 +56,8 @@ fst2max <- function(x, ...) {
 
 # ---------------------------------------- Data prepa r#####################################################
 xxalp <- read.csv("all.csv", colClasses = c(rep("character", 2), rep("numeric", 5)))
+ii<-which(xxalp$xj>=8)
+xxalp<-xxalp[ii,];
 # cross area at breast height(1.3m) unit: cm2
 xxalp$cab <- xxalp$xj * xxalp$xj * pi/4
 
@@ -144,14 +146,18 @@ rimp <- (rden.3 + rfrq.3 + rcvg.3)/3
 simp_idx = 1 - apply(rden.3 * rden.3, 1, sum)
 
 # dominant species :: dom_spec
-dom_spec <- as.data.frame(matrix(ncol = 4, nrow = nrow(rimp)))
-row.names(dom_spec) <- row.names(rimp)
-names(dom_spec) <- c("max_spec", "max", "max2_spec", "max2")
-f2max = apply(rimp, 1, fst2max)
-f2maxi <- apply(rimp, 1, fst2maxi)
 
-dom_spec[, c(1, 3)] <- colnames(rimp)[t(f2maxi)]
-dom_spec[, c(2, 4)] <- t(f2max)
+dom_spec <- as.data.frame(matrix(ncol = 8, nrow = nrow(rimp)))
+row.names(dom_spec) <- row.names(rimp)
+names(dom_spec) <- c("max_spec", "max", "max2_spec", "max2","max3_spec", "max3","max4_spec", "max4")
+spec.nm<-row.names(t(rimp))
+
+l<-nrow(rimp)
+for(i in 1:l){
+	x<-order(rimp[i,],decreasing = TRUE)
+	dom_spec[i,c(1,3,5,7)]<-spec.nm[x[1:4]]
+	dom_spec[i,c(2,4,6,8)]<-rimp[i,x[1:4]]
+}
 
 # dominant species and plot number of XXAL °×èë °ßÒ¶³íÀî ³íÀî ³ôÀäÉ¼ ´ºÓÜ ·çèë ÝïÁø ºÚèë ºìÆ¤ÔÆÉ¼ ºìËÉ ºúÌÒé± ™Æ»± ¿·é² 65 1 1 15 16 3 1 6 9 28 3 1 1
 # ÁÑÒ¶ÓÜ ÂäÒ¶ËÉ Ã«³àÑî ÃÉ¹ÅèÝ Çà¿¬éÊ É«Ä¾éÊ É½Ñî Ë®ÇúÁø ÓÜÊ÷ ÕÁ×ÓËÉ ×Ïé² 1 80 6 44 1 5 11 10 1 21 1
